@@ -7,12 +7,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..forms import PostForm
 from ..models import Post, Group, Comment
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 User = get_user_model()
+
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostCreateFormTests(TestCase):
@@ -52,7 +52,7 @@ class PostCreateFormTests(TestCase):
             b'\x0A\x00\x3B'
         )
         uploaded = SimpleUploadedFile(
-            name=f'small.gif',
+            name='small.gif',
             content=small_gif,
             content_type='image/gif'
         )
@@ -111,7 +111,7 @@ class PostCreateFormTests(TestCase):
             b'\x0A\x00\x3B'
         )
         uploaded = SimpleUploadedFile(
-            name=f'small_01.gif',
+            name='small_01.gif',
             content=small_gif,
             content_type='image/gif'
         )
@@ -193,7 +193,6 @@ class CommetTest(TestCase):
 
     def test_only_not_authorized_users_can_comment_on_posts(self):
         comment_count = Comment.objects.count()
-        
         form_data = {
             'text': 'А мне плевать на твои мысли!',
         }

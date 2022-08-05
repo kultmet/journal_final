@@ -46,9 +46,7 @@
       {% endif %}
     </article>
   </div>
-  <!-- Форма добавления комментария -->
   {% load user_filters %}
-
   {% if user.is_authenticated %}
     <div class="card my-4">
       <h5 class="card-header">Добавить комментарий:</h5>
@@ -63,7 +61,6 @@
       </div>
     </div>
   {% endif %}
-  
   {% for comment in comments %}
     <div class="media mb-4">
       <div class="media-body">
