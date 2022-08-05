@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Записи сообщества {{ group.title }}{% endblock %}
+{% block content %}
+  <h1>{{ group.title }}</h1>
+  <p>{{ group.description }}</p>
+  {% for post in page_obj %}
+    {% include 'posts/includes/post_data.html' %}
+    <a href="{% url 'posts:post_detail' post.id %}">подробная информация </a>
+    {% if post.group %}   
+      <p><a href="{% url 'posts:group_list' post.group.slug %}">все записи группы "{{ post.group }}"</a></p>
+    {% endif %}
+    {% if not forloop.last %}<hr>{% endif %}
+  {% endfor %}
+  {% include 'posts/includes/paginator.html' %}
+
+{% endblock %}  
+

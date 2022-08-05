@@ -1,0 +1,19 @@
+{% load thumbnail %}
+<article>
+  <ul>
+    <li>
+      {% if not post.author.get_full_name %}
+        Автор: <a href="{% url 'posts:profile' post.author.username %}">{{ post.author.username }}</a> 
+      {% else %}
+        Автор: <a href="{% url 'posts:profile' post.author.username %}">{{ post.author.get_full_name }}</a>
+      {% endif %} 
+    </li>
+    <li>
+      Дата публикации: {{ post.pub_date|date:"d E Y" }}
+    </li>
+  </ul>
+  {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+    <img class="card-img my-2" src="{{ im.url }}" width="960" height="339" alt="">
+  {% endthumbnail %}
+  <p>{{ post.text|linebreaksbr }}</p>
+</article>

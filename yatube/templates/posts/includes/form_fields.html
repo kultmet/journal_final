@@ -1,0 +1,21 @@
+{% load user_filters %}
+<div class="form-group row my-3 p-3"aria-required="{% if field.field.required %}true{% else %}false{% endif %}">
+  <label for="{{ field.id_for_label }}">
+    {{ field.label }}
+    {% if field.field.required %}
+      <span class="required text-danger">*</span>
+    {% endif %}
+  </label> 
+  <div>
+    {{ field|addclass:'form-control' }}
+    {% if field.help_text %}
+      <small id="{{ field.id_for_label }}-help" class="form-text text-muted">
+        {% if is_edit %}
+          {{ field.help_text.edit|safe }}
+        {% else %}
+          {{ field.help_text.create|safe }}
+        {% endif %}
+      </small>
+    {% endif %}
+  </div>
+</div>
