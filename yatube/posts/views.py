@@ -126,10 +126,8 @@ def profile_follow(request, username):
     following = author.following.filter(
         user=request.user
     )
-    if request.user != author and  not following:
-        Follow.objects.create(
-           user=request.user, author=author
-        )
+    if request.user != author and not following:
+        Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username)
 
 

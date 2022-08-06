@@ -62,7 +62,6 @@ class PostPagesTest(TestCase):
         cache.clear()
         self.authorized_client = Client()
         self.authorized_client.force_login(PostPagesTest.user)
-        
 
     def for_test_context_page_obj(self, first_object):
         """Вспомогательная функция для тестирования словаря context."""
@@ -261,7 +260,6 @@ class CachePagesTest(TestCase):
         self.assertNotEqual(response2.content, response.content)
 
 
-
 class FollowTest(TestCase):
     """Тестируем подписчиков."""
     def setUp(self):
@@ -280,7 +278,9 @@ class FollowTest(TestCase):
 
     def test_follow_for_authorized_user(self):
         """Тест Подписки для авторизованого пользователя."""
-        follow_count = Follow.objects.filter(user=self.user, author=self.author).count()
+        follow_count = Follow.objects.filter(
+            user=self.user, author=self.author
+        ).count()
         self.authorized_client.get(
             reverse('posts:profile_follow', args=(self.author.username,)))
         get_follow = Follow.objects.filter(user=self.user, author=self.author)
@@ -289,7 +289,9 @@ class FollowTest(TestCase):
     def test_unfollow_for_authorized_user(self):
         """Отписки для авторизованого пользователя."""
         Follow.objects.create(user=self.user, author=self.author)
-        follow_count = Follow.objects.filter(user=self.user, author=self.author).count()
+        follow_count = Follow.objects.filter(
+            user=self.user, author=self.author
+        ).count()
         self.authorized_client.get(
             reverse('posts:profile_unfollow', args=(self.author.username,)))
         get_follow = Follow.objects.filter(user=self.user, author=self.author)
@@ -325,7 +327,9 @@ class FollowTest(TestCase):
 
     def test_not_following_to_myself(self):
         """Тест Подписка на самого себя, невозможно."""
-        follow_count = Follow.objects.filter(user=self.user, author=self.user).count()
+        follow_count = Follow.objects.filter(
+            user=self.user, author=self.user
+        ).count()
         self.authorized_client.get(
             reverse('posts:profile_follow', args=(self.user.username,)))
         get_follow = Follow.objects.filter(user=self.user, author=self.user)

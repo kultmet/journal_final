@@ -169,6 +169,7 @@ class PostCreateFormTests(TestCase):
         self.assertNotEqual(his_post.text, form_data['text'])
         self.assertNotEqual(his_post.text, form_data['group'])
 
+
 class CommetTest(TestCase):
     """Тестируем добавление комментария."""
     @classmethod
