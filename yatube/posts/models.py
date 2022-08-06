@@ -11,7 +11,7 @@ class Post(models.Model):
     text = models.TextField(
         help_text={'create': 'Напишите', 'edit': 'Редактируйте'}
     )
-    pub_date = models.DateTimeField(auto_now_add=True)
+    pub_date = models.DateTimeField(auto_now_add=True, db_index=True)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -63,7 +63,7 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
     )
     text = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ['-created']
@@ -84,3 +84,11 @@ class Follow(models.Model):
         related_name='following',
         on_delete=models.CASCADE
     )
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name="unique_followers"
+            ),
+            # models.CheckConstraint(check=models.Q()),
+        ]

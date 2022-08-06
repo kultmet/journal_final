@@ -8,7 +8,7 @@ from .models import Follow, Post, Group, Comment, User
 from .utils import paginator
 
 
-@cache_page(20, key_prefix='main_page')
+@cache_page(settings.CACHE_TIME, key_prefix='main_page')
 def index(request):
     post_list = Post.objects.select_related('author', 'group')
     page_obj = paginator(request, post_list, settings.LIMITED)
@@ -32,11 +32,14 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    posts = author.posts.order_by('-pub_date')
+    posts = author.posts.select_related('author', 'group')
     page_obj = paginator(request, posts, settings.LIMITED)
     following = (
-        request.user.is_authenticated and author != request.user
-        and Follow.objects.filter(user=request.user, author=author)
+        request.user.is_authenticated
+        and author != request.user
+        and Follow.objects.filter(
+            user=request.user, author=author
+        ).exists()
     )
     context = {
         'author': author,
@@ -48,7 +51,7 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
-    form = CommentForm(request.POST or None)
+    form = CommentForm(None)
     comments = Comment.objects.select_related('post').filter(post=post)
     context = {
         'post': post,
@@ -99,10 +102,10 @@ def add_comment(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     form = CommentForm(request.POST or None)
     if form.is_valid():
-        comment = form.save(commit=False)
-        comment.author = request.user
-        comment.post = post
-        comment.save()
+        comment_form = form.save(commit=False)
+        comment_form.author = request.user
+        comment_form.post = post
+        comment_form.save()
     return redirect('posts:post_detail', post_id)
 
 
@@ -123,9 +126,9 @@ def profile_follow(request, username):
     following = author.following.filter(
         user=request.user
     )
-    if request.user != author and not following:
+    if request.user != author and  not following:
         Follow.objects.create(
-            author=author, user=request.user
+           user=request.user, author=author
         )
     return redirect('posts:profile', username)
 
@@ -136,8 +139,8 @@ def profile_unfollow(request, username):
     following = author.following.filter(
         user=request.user
     )
-    if request.user != author and following:
-        Follow.objects.get(
+    if request.user is not author and following:
+        Follow.objects.filter(
             author=author, user=request.user
         ).delete()
     return redirect('posts:profile', username)

@@ -1,8 +1,8 @@
 import shutil
 import tempfile
 
-from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -16,6 +16,21 @@ User = get_user_model()
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostCreateFormTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.user = User.objects.create_user(username='auth')
+        cls.not_author = User.objects.create_user(username='not_author')
+        cls.group = Group.objects.create(
+            title='Текстовый заголовок',
+            slug='test-slug',
+            description='текстовый текст'
+        )
+        cls.post = Post.objects.create(
+            text='какой-то текст',
+            author=cls.user,
+            group=cls.group,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -23,18 +38,6 @@ class PostCreateFormTests(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        self.user = User.objects.create_user(username='auth')
-        self.not_author = User.objects.create_user(username='not_author')
-        self.group = Group.objects.create(
-            title='Текстовый заголовок',
-            slug='test-slug',
-            description='текстовый текст'
-        )
-        self.post = Post.objects.create(
-            text='какой-то текст',
-            author=self.user,
-            group=self.group,
-        )
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.not_author_client = Client()
@@ -58,7 +61,7 @@ class PostCreateFormTests(TestCase):
         )
         form_data = {
             'text': 'еще один дополнительный пост',
-            'group': self.group.pk,
+            'group': PostCreateFormTests.group.pk,
             'image': uploaded,
         }
         response = self.authorized_client.post(
@@ -69,8 +72,9 @@ class PostCreateFormTests(TestCase):
         new_post = Post.objects.first()
         self.assertEqual(Post.objects.count(), post_count + 1)
         self.assertEqual(new_post.text, form_data['text'])
-        self.assertEqual(new_post.author, self.user)
-        self.assertEqual(new_post.group, self.group)
+        self.assertEqual(new_post.author, PostCreateFormTests.user)
+        self.assertEqual(new_post.group, PostCreateFormTests.group)
+        self.assertTrue(new_post.image, True)
         self.assertEqual(new_post.image, f'posts/{form_data["image"]}')
         self.assertRedirects(
             response, reverse(
@@ -83,7 +87,7 @@ class PostCreateFormTests(TestCase):
         post_count = Post.objects.count()
         form_data = {
             'text': 'еще один дополнительный пост',
-            'group': self.group.pk,
+            'group': PostCreateFormTests.group.pk,
         }
         response = self.client.post(
             reverse('posts:post_create'),
@@ -99,7 +103,7 @@ class PostCreateFormTests(TestCase):
         """Тестируем редактинование поста, автором поста."""
         my_post = Post.objects.create(
             text='мой пост',
-            author=self.user
+            author=PostCreateFormTests.user
         )
         post_count = Post.objects.count()
         small_gif = (
@@ -118,7 +122,7 @@ class PostCreateFormTests(TestCase):
         new_text = 'добавить еще текст'
         form_data = {
             'text': new_text,
-            'group': self.group.pk,
+            'group': PostCreateFormTests.group.pk,
             'image': uploaded,
         }
         response = self.authorized_client.post(
@@ -132,9 +136,10 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(Post.objects.count(), post_count)
         self.assertEqual(my_post.text, form_data['text'])
         self.assertEqual(
-            my_post.author, self.user
+            my_post.author, PostCreateFormTests.user
         )
-        self.assertEqual(my_post.group, self.group)
+        self.assertEqual(my_post.group, PostCreateFormTests.group)
+        self.assertTrue(my_post.image, True)
         self.assertEqual(my_post.image, f'posts/{form_data["image"]}')
         self.assertRedirects(response, reverse(
             'posts:post_detail', args=(my_post.pk,)
@@ -144,13 +149,13 @@ class PostCreateFormTests(TestCase):
         """Тестируем редактирование поста, не автором."""
         his_post = Post.objects.create(
             text='его пост',
-            author=self.user
+            author=PostCreateFormTests.user
         )
         post_count = Post.objects.count()
         new_text = 'добавить еще текст'
         form_data = {
             'text': new_text,
-            'group': self.group.pk,
+            'group': PostCreateFormTests.group.pk,
         }
         response = self.not_author_client.post(
             reverse('posts:post_edit', args=(his_post.pk,)),
@@ -161,26 +166,33 @@ class PostCreateFormTests(TestCase):
         self.assertRedirects(response, reverse(
             'posts:post_detail', args=(his_post.pk,)
         ))
-
+        self.assertNotEqual(his_post.text, form_data['text'])
+        self.assertNotEqual(his_post.text, form_data['group'])
 
 class CommetTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='auth')
-        self.post = Post.objects.create(
+    """Тестируем добавление комментария."""
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.user = User.objects.create_user(username='auth')
+        cls.post = Post.objects.create(
             text='Я виражаю свои мысли.',
-            author=self.user
+            author=cls.user
         )
-        self.commentator = User.objects.create_user(username='toxic')
+        cls.commentator = User.objects.create_user(username='toxic')
+
+    def setUp(self):
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.commentator)
+        self.authorized_client.force_login(CommetTest.commentator)
 
     def test_only_authorized_users_can_comment_on_posts(self):
+        """Тестируем комментарии добавление авторизованым пользователем."""
         comment_count = Comment.objects.count()
         form_data = {
             'text': 'А мне плевать на твои мысли!',
         }
         response = self.authorized_client.post(
-            reverse('posts:add_comment', args=(self.post.pk,)),
+            reverse('posts:add_comment', args=(CommetTest.post.pk,)),
             data=form_data,
             follow=True
         )
@@ -188,20 +200,21 @@ class CommetTest(TestCase):
         self.assertEqual(Comment.objects.count(), comment_count + 1)
         self.assertEqual(new_comment.text, form_data['text'])
         self.assertRedirects(
-            response, reverse('posts:post_detail', args=(self.post.pk,))
+            response, reverse('posts:post_detail', args=(CommetTest.post.pk,))
         )
 
     def test_only_not_authorized_users_can_comment_on_posts(self):
+        """Тестируем нельзя комментировать. Неавторизованый пользователь"""
         comment_count = Comment.objects.count()
         form_data = {
             'text': 'А мне плевать на твои мысли!',
         }
         response = self.client.post(
-            reverse('posts:add_comment', args=(self.post.pk,)),
+            reverse('posts:add_comment', args=(CommetTest.post.pk,)),
             data=form_data,
             follow=True
         )
         self.assertEqual(Comment.objects.count(), comment_count)
         login_url = reverse('users:login')
-        url = reverse('posts:add_comment', args=(self.post.pk,))
+        url = reverse('posts:add_comment', args=(CommetTest.post.pk,))
         self.assertRedirects(response, f'{login_url}?next={url}')
