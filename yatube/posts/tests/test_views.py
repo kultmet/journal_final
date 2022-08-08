@@ -21,7 +21,6 @@ User = get_user_model()
 class PostPagesTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        super().setUpTestData()
         cls.user = User.objects.create_user(username='auth')
         cls.group = Group.objects.create(
             title='Текстовый заголовок',
@@ -252,7 +251,7 @@ class CachePagesTest(TestCase):
         )
         response = self.authorized_client.get(reverse('posts:main_page'))
         self.assertEqual(response.context['page_obj'][0], post)
-        Post.objects.get(pk=post.pk).delete()
+        post.delete()
         response1 = self.authorized_client.get(reverse('posts:main_page'))
         self.assertEqual(response1.content, response.content)
         cache.clear()

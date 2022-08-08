@@ -18,7 +18,6 @@ User = get_user_model()
 class PostCreateFormTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        super().setUpTestData()
         cls.user = User.objects.create_user(username='auth')
         cls.not_author = User.objects.create_user(username='not_author')
         cls.group = Group.objects.create(
@@ -149,7 +148,7 @@ class PostCreateFormTests(TestCase):
         """Тестируем редактирование поста, не автором."""
         his_post = Post.objects.create(
             text='его пост',
-            author=PostCreateFormTests.user
+            author=PostCreateFormTests.user,
         )
         post_count = Post.objects.count()
         new_text = 'добавить еще текст'
@@ -167,14 +166,13 @@ class PostCreateFormTests(TestCase):
             'posts:post_detail', args=(his_post.pk,)
         ))
         self.assertNotEqual(his_post.text, form_data['text'])
-        self.assertNotEqual(his_post.text, form_data['group'])
+        self.assertNotEqual(his_post.group, PostCreateFormTests.group)
 
 
 class CommetTest(TestCase):
     """Тестируем добавление комментария."""
     @classmethod
     def setUpTestData(cls):
-        super().setUpTestData()
         cls.user = User.objects.create_user(username='auth')
         cls.post = Post.objects.create(
             text='Я виражаю свои мысли.',

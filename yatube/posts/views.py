@@ -51,7 +51,7 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
-    form = CommentForm(None)
+    form = CommentForm()
     comments = Comment.objects.select_related('post').filter(post=post)
     context = {
         'post': post,
@@ -100,9 +100,9 @@ def post_edit(request, post_id):
 @login_required
 def add_comment(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
-    form = CommentForm(request.POST or None)
-    if form.is_valid():
-        comment_form = form.save(commit=False)
+    comment_form = CommentForm(request.POST or None)
+    if comment_form.is_valid():
+        comment_form = comment_form.save(commit=False)
         comment_form.author = request.user
         comment_form.post = post
         comment_form.save()
@@ -123,21 +123,15 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    following = author.following.filter(
-        user=request.user
-    )
-    if request.user != author and not following:
-        Follow.objects.create(user=request.user, author=author)
+    if request.user != author:
+        Follow.objects.get_or_create(user=request.user, author=author)
     return redirect('posts:profile', username)
 
 
 @login_required
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
-    following = author.following.filter(
-        user=request.user
-    )
-    if request.user is not author and following:
+    if request.user is not author:
         Follow.objects.filter(
             author=author, user=request.user
         ).delete()
