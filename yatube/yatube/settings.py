@@ -1,13 +1,20 @@
 import os
+import mimetypes
 
+mimetypes.add_type("application/javascript", ".js", True)
+
+DEBUG_TOOLBAR_CONFIG = {
+        'INTERCEPT_REDIRECTS': False,
+    }
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = '4cfg5@)n0*7!k1vhl=)330s=(ycuusgf8h3mxpj!bi3knlz^d8'
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
+    '51.250.23.237',
     'localhost',
     '127.0.0.1',
     '[::1]',
@@ -31,6 +38,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'about.apps.AboutConfig',
     'sorl.thumbnail',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -41,6 +49,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
+
+INTERNAL_IPS = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
 ]
 
 ROOT_URLCONF = 'yatube.urls'
